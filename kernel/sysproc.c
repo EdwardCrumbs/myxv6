@@ -95,3 +95,22 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+
+uint64
+sys_wait2(void)
+{
+  uint64 child_process_status;
+  uint64 rusage_status;
+
+  if(argaddr(0, &child_process_status) < 0){
+  	return -1;
+  }
+
+  if(argaddr(1, &rusage_status) < 0){
+  	return -1;
+  }
+  
+  return wait2(child_process_status, rusage_status);
+
+}

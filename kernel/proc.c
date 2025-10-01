@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "pstat.h"
 
 struct cpu cpus[NCPU];
 
@@ -18,7 +19,7 @@ struct spinlock pid_lock;
 extern void forkret(void);
 static void freeproc(struct proc *p);
 
-extern char trampoline[]; // trampoline.S
+extern char trampoline[]; // trampolin.S
 
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
@@ -140,8 +141,10 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+  p->cpuTime = 0;
 
   return p;
+
 }
 
 // free a proc structure and the data hanging from it,
@@ -653,4 +656,42 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+void 
+wait2(uint64 a1, uint64 a2)
+{
+	struct proc *p;
+	int havekids, pid;
+	struct rusage ru;
+
+	acquire(&wait_lock);
+
+	for(;;){
+		havekids = 0;
+		for(p = proc; p < &proc[NPROC]; p++){
+			if(p -> parent == myproc()){
+				havekids = 1;
+				if(p -> state == ZOMBIE){
+					pid = p -> pid;
+
+					if(a1 != 0){
+						if(copyout(myproc() -> pagetable, a1, (char *)&p -> state,
+									sizeof(p -> xstate)) < 0){
+							release(&wait_lock);
+							return -1;
+						}
+					}
+					ru.cputime = p -> cputime;
+
+					if(a2 != 0){
+						if(copyout(myproc() -> pagetable, a2, (char *)&ru,
+                                                                        sizeof(ru)) < 0){
+						
+						}
+					}
+				}
+			}
+		}
+	
+	}
 }
