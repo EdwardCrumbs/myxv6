@@ -1,13 +1,15 @@
 #include  "kernel/types.h"
 #include "kernel/stat.h"
 #include "user.h" 
-
+#include "pstat.h"
 
 int time1(int argc char ** argv){
 	int numOfTicks = uptime();
 	int pid;
 	int totalTime_elapsed;
 	int endOfTicks;
+	int theCpu;
+	int totalPercent;
 
 	if(argc < 2){
 		printf("Error");
@@ -28,10 +30,17 @@ int time1(int argc char ** argv){
 		exit(1);
 	}else{
 		
-		wait(0);
+		wait2(&status, &ru);
 		endOfTicks = uptime();
 		totalTime_elapsed = endOfTicks - numOfTicks;
-		printf("Time: %d", totalTime_elapsed);
+		theCpu = ru.cpuTime;
+		totalPercent = 0;
+
+		if(totalTime_elapsed > 0){
+			totalPercent = (theCpu * 100) / totalTime_elapsed;
+		
+		}
+		printf("elapsed time: %d ticks, cpu time: %d ticks, %d%% CPU", totalTime_elapsed);
 		exit(0);
 	}
 	

@@ -657,7 +657,7 @@ procdump(void)
     printf("\n");
   }
 }
-void 
+int 
 wait2(uint64 a1, uint64 a2)
 {
 	struct proc *p;
@@ -668,9 +668,13 @@ wait2(uint64 a1, uint64 a2)
 
 	for(;;){
 		havekids = 0;
+		//loop through the processes
 		for(p = proc; p < &proc[NPROC]; p++){
+			//checking if p belongs to the current process
 			if(p -> parent == myproc()){
 				havekids = 1;
+
+				//checking if the process is dead
 				if(p -> state == ZOMBIE){
 					pid = p -> pid;
 
@@ -681,17 +685,32 @@ wait2(uint64 a1, uint64 a2)
 							return -1;
 						}
 					}
-					ru.cputime = p -> cputime;
 
+					//filling rusage with the cputime
+					ru.cpuTime = p -> cpuTime;
+					
+
+					//if the user gave us user memory then we cpoy the rusage
 					if(a2 != 0){
 						if(copyout(myproc() -> pagetable, a2, (char *)&ru,
                                                                         sizeof(ru)) < 0){
-						
+							release(&wait_lock);
+							return -1;
 						}
 					}
+
+					//free up the process once it's done
+					freeproc(p);
+					release(&wait_lock);
+					return pid;
 				}
 			}
 		}
+		if(!havekids || myproc()->killed){
+			release(&wait_lock);
+			return -1;
+		}
+		sleep(myproc(), &wait_lock);
 	
 	}
 }
