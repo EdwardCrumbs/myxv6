@@ -10,10 +10,10 @@ int main(int argc, char **argv)
     int i;
     char *state;
     static char *states[] = {
-        [SLEEPING] "sleeping",
-        [RUNNABLE] "runnable",
-        [RUNNING] "running ",
-        [ZOMBIE] "zombie  "};
+        [SLEEPING_C] "sleeping",
+        [RUNNABLE_C] "runnable",
+        [RUNNING_C] "running ",
+        [ZOMBIE_C] "zombie  "};
 
     nprocs = getprocs(uproc);
     if (nprocs < 0)
