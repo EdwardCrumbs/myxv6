@@ -107,4 +107,64 @@ sys_getprocs(void)
     return -1;
   return(procinfo(addr));
 }
+uint64 
+sys_getPriority(void)
+{
+int pid;
+struct proc *p;
+int thePriority = -1;
 
+if(argint(0, &pid) < 0){
+	return -1;
+}
+
+//looking for the process
+
+for(p = proc; p < &proc[NPROC]; p++){
+	if(p -> pid == pid){
+		thePriority = p -> priority;
+		break;
+	
+	}
+	
+}
+return thePriority;
+}
+
+
+uint64
+sys_setPriority(void)
+{
+int pid;
+int pri;
+
+struct proc *p;
+
+//checking if we found the process
+int theChanged = 0;
+
+if(argint(0, &pid) < 0 || argint(1, &pri) < 0){
+	return -1;
+}
+
+
+//looking for process again
+
+
+for(p = proc; p< &proc[NPROC]; p++){
+	if(p -> pid == pid){
+		acquire(&p -> lock);
+		p -> priority = pri;
+		release(&p->lock);
+		theChanged = 1;
+		break;
+	}
+}
+//checking if we didn't find a process
+if(theChanged == 0){
+	return -1;
+}
+
+return 0;
+
+}

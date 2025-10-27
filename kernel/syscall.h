@@ -20,4 +20,7 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
-#define SYS_getprocs 22 //hw3 getprocs
+#define SYS_getprocs 22 //hw3 get 
+#define SYS_getPriority 23
+#define SYS_setPriority 24
+

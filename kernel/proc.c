@@ -120,7 +120,8 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-
+  p->priority = 10;
+  
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -244,7 +245,7 @@ userinit(void)
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
-
+  p->readyTime = ticks;
   release(&p->lock);
 }
 
@@ -440,30 +441,56 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  struct proc *highest_prio;
+  int beenFound;
+  int i;
   
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for(p = proc; p < &proc[NPROC]; p++) {
-      acquire(&p->lock);
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
+    highest_prio = 0;
+    found = 0;
+    
+    int highestPriority = -1;
+    //looking for the process with the highest priority
+    for(i = 0; i < NPROC; i++){
+    	p = &proc[i];
 
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-      }
-      release(&p->lock);
+	acquire(&p -> lock);
+
+	if(p -> state == RUNNABLE){
+		p -> readyTime = ticks; // seeting the readytime
+	  if(p -> priority > highestPriority){
+             //process found with higher priority
+	     highestPriority = p -> priority;
+	     if(highest_prio){
+	     	release(&chosen -> lock); // release the previous process
+		highest_prio = p;
+		found = 1;
+	     }else{
+	     	release(&p -> lock);
+	     }
+	  }else{
+	    release(&p -> lock);
+	  }
+	}
+    
     }
-  }
+    //if we found process to run then we run it
+    if(found && highest_prio != 0){
+    	highest_prio -> state = RUNNING;
+	c -> proc = highest_prio;
+	swtch(&c->context, &highest_prio -> context);
+	c -> proc = 0;
+	release(&highest_prio -> lock);
+    }
+
+    
+   }
 }
+
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
@@ -567,6 +594,7 @@ wakeup(void *chan)
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
         p->state = RUNNABLE;
+	p->readyTime = ticks;
       }
       release(&p->lock);
     }
@@ -588,6 +616,7 @@ kill(int pid)
       if(p->state == SLEEPING){
         // Wake process from sleep().
         p->state = RUNNABLE;
+	p->readyTime = ticks;
       }
       release(&p->lock);
       return 0;
@@ -674,6 +703,8 @@ procinfo(uint64 addr)
     procinfo.pid = p->pid;
     procinfo.state = p->state;
     procinfo.size = p->sz;
+    procinfo.priority = p->priority;
+    procinfo.readyTime = p -> readyTime;
     if (p->parent)
       procinfo.ppid = (p->parent)->pid;
     else
