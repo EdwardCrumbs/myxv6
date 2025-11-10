@@ -139,6 +139,7 @@ UPROGS=\
 	$U/_matmul\
 	$U/_prio_test\
 	$U/_free\
+	$U/_memory-user\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
