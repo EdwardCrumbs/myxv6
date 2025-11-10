@@ -107,6 +107,7 @@ extern uint64 sys_uptime(void);
 extern uint64 sys_getprocs(void); //hw3 getprocs
 extern uint64 sys_getPriority(void);
 extern uint64 sys_setPriority(void);
+extern uint64 sys_freepem(void);
 
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -133,6 +134,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_getprocs]   sys_getprocs,//hw3 getpro
 [SYS_getPriority] sys_getPriority,
 [SYS_setPriority] sys_setPriority,
+[SYS_freepem] sys_freepem,
 };
 
 void

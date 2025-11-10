@@ -165,19 +165,21 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 void
 uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 {
-  uint64 a;
-  pte_t *pte;
+  uint64 adder;
 
   if((va % PGSIZE) != 0)
     panic("uvmunmap: not aligned");
 
-  for(a = va; a < va + npages*PGSIZE; a += PGSIZE){
-    if((pte = walk(pagetable, a, 0)) == 0)
-      panic("uvmunmap: walk");
+  for(adder = PGROUNDDOWN(va); npages > 0; npages--, adder += PGSIZE){
+	  pte_t *pte = walk(pagetable, adder, 0);
+
+    if(pte == 0)
+      continue;
     if((*pte & PTE_V) == 0)
-      panic("uvmunmap: not mapped");
+      continue;
     if(PTE_FLAGS(*pte) == PTE_V)
-      panic("uvmunmap: not a leaf");
+      continue;
+
     if(do_free){
       uint64 pa = PTE2PA(*pte);
       kfree((void*)pa);
@@ -300,31 +302,29 @@ uvmfree(pagetable_t pagetable, uint64 sz)
 int
 uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 {
-  pte_t *pte;
-  uint64 pa, i;
-  uint flags;
-  char *mem;
+  uint64 adder;
 
-  for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walk(old, i, 0)) == 0)
-      panic("uvmcopy: pte should exist");
+  for(adder = 0; adder < sz; adder  += PGSIZE){
+	  pte_t *pte = walk(old, adder, 0);
+    if(pte == 0)
+      continue;
     if((*pte & PTE_V) == 0)
-      panic("uvmcopy: page not present");
-    pa = PTE2PA(*pte);
-    flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
-      goto err;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
-      goto err;
+      continue;
+    uint64 pa = PTE2PA(*pte);
+    char *newPage = kalloc();
+    if(newPage == 0){
+    	uvmunmap(new, 0, adder/PGSIZE, 1);
+	return -1;
+    }
+    memmove(newPage, (char*)pa, PGSIZE);
+    if(mappages(new, adder, PGSIZE, (uint64)newPage, PTE_U |
+			    PTE_R | PTE_W) != 0){
+      kfree(newPage);
+      uvmunmap(new, 0, adder /PGSIZE, 1);
+      return -1;
     }
   }
   return 0;
-
- err:
-  uvmunmap(new, 0, i / PGSIZE, 1);
-  return -1;
 }
 
 // mark a PTE invalid for user access.

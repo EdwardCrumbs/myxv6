@@ -451,7 +451,7 @@ scheduler(void)
     intr_on();
 
     highest_prio = 0;
-    found = 0;
+    beenFound = 0;
     
     int highestPriority = -1;
     //looking for the process with the highest priority
@@ -466,9 +466,9 @@ scheduler(void)
              //process found with higher priority
 	     highestPriority = p -> priority;
 	     if(highest_prio){
-	     	release(&chosen -> lock); // release the previous process
+	     	release(&highest_prio -> lock); // release the previous process
 		highest_prio = p;
-		found = 1;
+		beenFound = 1;
 	     }else{
 	     	release(&p -> lock);
 	     }
@@ -479,7 +479,7 @@ scheduler(void)
     
     }
     //if we found process to run then we run it
-    if(found && highest_prio != 0){
+    if(beenFound && highest_prio != 0){
     	highest_prio -> state = RUNNING;
 	c -> proc = highest_prio;
 	swtch(&c->context, &highest_prio -> context);

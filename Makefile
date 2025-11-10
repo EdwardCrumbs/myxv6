@@ -137,7 +137,8 @@ UPROGS=\
 	$U/_pstest\
 	$U/_sleep\
 	$U/_matmul\
-	$U/_prioTest\
+	$U/_prio_test\
+	$U/_free\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

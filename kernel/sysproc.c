@@ -41,15 +41,18 @@ sys_wait(void)
 uint64
 sys_sbrk(void)
 {
-  int addr;
-  int n;
+   int n;
 
-  if(argint(0, &n) < 0)
-    return -1;
-  addr = myproc()->sz;
-  if(growproc(n) < 0)
-    return -1;
-  return addr;
+   if(argint(0, &n) < 0)
+	   return -1;
+
+   struct proc *p = myproc();
+   uint64 previousSize = p->sz;
+
+
+   p->sz = p->sz + n;
+
+   return previousSize;
 }
 
 uint64
@@ -95,7 +98,13 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+extern uint64 freepem(void);
 
+
+uint64
+sys_freepem(void){
+	return freepem();
+}
 // return the number of active processes in the system
 // fill in user-provided data structure with pid,state,sz,ppid,name
 uint64

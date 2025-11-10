@@ -27,7 +27,7 @@ int uptime(void);
 int getprocs(struct pstat*); //hw3 getprocs
 int getPriority(int pid);
 int setPriority(int pid, int priority);
-
+uint64 freepem(void);
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);

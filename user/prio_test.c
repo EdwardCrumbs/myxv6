@@ -9,12 +9,12 @@ int main(void)
 	int pid = getpid();
 
 	int pri = getPriority(pid);
-
+	printf("Priority of process %d is %d\n", pid, pri);
 	setPriority(pid, 20);
 
 	int child = fork();
 
-	if( child === 0){
+	if( child == 0){
 		exec("ps", 0);
 		exit(0);
 	}else{

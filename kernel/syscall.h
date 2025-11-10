@@ -23,4 +23,4 @@
 #define SYS_getprocs 22 //hw3 get 
 #define SYS_getPriority 23
 #define SYS_setPriority 24
-
+#define SYS_freepem 25
